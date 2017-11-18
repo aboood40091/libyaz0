@@ -36,7 +36,7 @@ def printInfo():
     print(" -level <level>    compression level (1-9) (9 is the default)")
     print("                   0: Fastest")
     print("                   9: Best")
-    print(" -unk <unk>        the unknow value that will be located at 0x8-0xC (0x00000000 is the default)")
+    print(" -unk <unk>        the unknown value that will be located at 0x8-0xC (0x00000000 is the default)")
 
     sys.exit()
 
