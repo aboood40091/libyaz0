@@ -20,140 +20,137 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import math
 import struct
-from io import BytesIO
 
-from libc.stdint cimport uint8_t as u8
-from libc.stdint cimport int8_t as s8
-from libc.stdint cimport uint32_t as u32
+ctypedef unsigned char u8
+ctypedef char s8
+ctypedef unsigned int u32
+
+cimport libc.math as math
 
 
-cpdef bytes DecompressYaz(src):
+cpdef bytearray DecompressYaz(src):
     cdef u32 dest_end = struct.unpack(">I", src[4:8])[0]
-    dest = BytesIO()
+    cdef bytearray dest = bytearray(dest_end)
 
     cdef u32 src_end = len(src)
 
     cdef u8 code = 0
     cdef int code_len = 0
 
-    cdef u32 pos = 16
+    cdef u32 src_pos = 16
+    cdef u32 dest_pos = 0
 
-    cdef u8 b1, b2, copy_src
-    cdef u32 old_pos
+    cdef u8 b1, b2
+    cdef u32 copy_src
     cdef bytes copy_data
     cdef list new_data
     cdef int n
 
-    while pos < src_end and dest.tell() < dest_end:
+    while src_pos < src_end and dest_pos < dest_end:
         if not code_len:
-            code = ord(src[pos:pos + 1])
-            pos += 1
+            code = src[src_pos]
+            src_pos += 1
             code_len = 8
 
         if code & 0x80:
-            dest.write(src[pos:pos + 1])
-            pos += 1
+            dest[dest_pos] = src[src_pos]
+            src_pos += 1
+            dest_pos += 1
 
         else:
-            b1 = ord(src[pos:pos + 1])
-            pos += 1
-            b2 = ord(src[pos:pos + 1])
-            pos += 1
+            b1 = src[src_pos]
+            src_pos += 1
+            b2 = src[src_pos]
+            src_pos += 1
 
-            old_pos = dest.tell()
-
-            copy_src = old_pos - ((b1 & 0x0f) << 8 | b2) - 1
+            copy_src = dest_pos - ((b1 & 0x0f) << 8 | b2) - 1
 
             n = b1 >> 4
             if not n:
-                n = ord(src[pos:pos + 1]) + 0x12
-                pos += 1
+                n = src[src_pos] + 0x12
+                src_pos += 1
 
             else:
                 n += 2
 
             assert (3 <= n <= 0x111)
 
-            dest.seek(copy_src)
-            copy_data = dest.read(n)
-
-            if not copy_data:
-                copy_data = bytearray(n)
-                print(n)
-
-            if len(copy_data) < n:
-                new_data = [copy_data]
-                diff = n - len(copy_data)
-
-                for _ in range(diff // len(copy_data)):
-                    new_data.append(copy_data)
-
-                new_data.append(copy_data[:(diff % len(copy_data))])
-                copy_data = b''.join(new_data)
-
-            dest.seek(old_pos)
-            dest.write(copy_data)
+            while n > 0:
+                n -= 1
+                dest[dest_pos] = dest[copy_src]
+                copy_src += 1
+                dest_pos += 1
 
         code <<= 1
         code_len -= 1
 
-    return dest.getvalue()
+    return dest
 
 
-cpdef bytes CompressYaz(src, level):
+cdef bytearray CompressYazFast(src):
+    cdef u32 pos = 0
     cdef bytearray dest = bytearray()
+    cdef u32 src_end = len(src)
+    cdef u8 n = 8
 
-    assert (1 <= level <= 9)
+    while pos < src_end:
+        if n == 8:
+            n = 0
+            dest += b'\xFF'
+        dest += src[pos:pos + 1]
+        pos += 1
+        n += 1
 
-    if level:
-        data_range = 0x10e0 * level // 9 - 0x0e0
+    return dest
+
+
+# This is currently as fast as the Python version, I will try to improve it later
+cpdef bytearray CompressYaz(src, level):
+    cdef bytearray dest = bytearray()
+    cdef u32 src_end = len(src)
+
+    if not level:
+        return CompressYazFast(src)
+    elif level < 9:
+        search_range = 0x10e0 * level // 9 - 0x0e0
     else:
-        data_range = 0
+        search_range = 0x1000
+
+    cdef u32 max_len = 0x111
 
     cdef u32 pos = 0
 
     cdef bytearray buffer
-    cdef u8 codeByte, i, max_len
-    cdef u32 old_pos, search_len, delta
-    cdef int search, found
-    cdef s8 found_len
+    cdef u8 code_byte
+    cdef int i, found
+    cdef u32 search, search_len, found_len, delta
     cdef bytes c1, search_data, byte
 
-    while pos < len(src):
+    while pos < src_end:
         buffer = bytearray()
         code_byte = 0
 
         for i in range(8):
-            max_len = math.ceil(15 * data_range / 0x1000 + 2)
-
-            old_pos = pos
-
-            search = old_pos - data_range
-            if search < 0:
+            if pos - search_range < 0:
                 search = 0
-                search_len = old_pos
+                search_len = pos
             else:
-                search_len = data_range
+                search = pos - search_range
+                search_len = search_range
 
             found_len = max_len
-            if pos + found_len > len(src):
-                found_len = len(src) - pos
+            if pos + found_len > src_end:
+                found_len = src_end - pos
 
             c1 = src[pos:pos + found_len]
-            pos = search
-            search_data = src[pos:pos + search_len]
-            pos = old_pos + len(c1)
+            search_data = src[search:search + search_len]
 
             found = search_data.rfind(c1)
 
             while found == -1 and found_len > 3:
-                pos = old_pos
-
                 found_len -= 1
                 c1 = src[pos:pos + found_len]
-                pos += found_len
 
                 if len(c1) < found_len:
                     found_len = len(c1)
@@ -162,19 +159,24 @@ cpdef bytes CompressYaz(src, level):
 
             if found_len >= 3 and found != -1:
                 delta = search_len - found - 1
-                buffer += bytes([delta >> 8 | (found_len - 2) << 4])
-                buffer += bytes([delta & 0xFF])
+                if found_len < 0x12:
+                    buffer += bytes([delta >> 8 | (found_len - 2) << 4])
+                    buffer += bytes([delta & 0xFF])
+                else:
+                    buffer += bytes([delta >> 8])
+                    buffer += bytes([delta & 0xFF])
+                    buffer += bytes([(found_len - 0x12) & 0xFF])
+                pos += found_len
 
             else:
-                pos = old_pos
                 byte = src[pos:pos + 1]
                 pos += 1
 
-                if byte:
-                    buffer += byte
-                code_byte = (1 << (7 - i)) | code_byte
+                buffer += byte
+
+                code_byte |= 1 << (7 - i)
 
         dest += bytes([code_byte])
         dest += buffer
 
-    return bytes(dest)
+    return dest

@@ -34,7 +34,7 @@ def printInfo():
     print(" -c                Compress (Will try to decompress if not specified)")
     print("\nCompression options:")
     print(" -level <level>    compression level (1-9) (9 is the default)")
-    print("                   1: Fastest")
+    print("                   0: Fastest")
     print("                   9: Best")
     print(" -unk <unk>        the unknow value that will be located at 0x8-0xC (0x00000000 is the default)")
 
@@ -73,6 +73,9 @@ def main():
             level = int(sys.argv[sys.argv.index("-level") + 1], 0)
         else:
             level = 0
+
+        if not 0 <= level <= 9:
+            printInfo()
 
         with open(input_, "rb") as inf:
             inb = inf.read()
