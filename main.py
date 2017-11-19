@@ -33,9 +33,9 @@ def printInfo():
     print(" -o <output>       Output file, if not specified, the output file will have the same name as the intput file")
     print(" -c                Compress (Will try to decompress if not specified)")
     print("\nCompression options:")
-    print(" -level <level>    compression level (1-9) (9 is the default)")
-    print("                   0: Fastest")
-    print("                   9: Best")
+    print(" -level <level>    compression level (1-9) (1 is the default)")
+    print("                   0: No compression (Fastest)")
+    print("                   9: Best compression (Slowest)")
     print(" -unk <unk>        the unknown value that will be located at 0x8-0xC (0x00000000 is the default)")
 
     sys.exit()
@@ -72,7 +72,7 @@ def main():
         if "-level" in sys.argv:
             level = int(sys.argv[sys.argv.index("-level") + 1], 0)
         else:
-            level = 0
+            level = 1
 
         if not 0 <= level <= 9:
             printInfo()
