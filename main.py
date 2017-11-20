@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # libyaz0
-# Version 0.1
+# Version 0.2
 # Copyright © 2017 MasterVermilli0n / AboodXD
 
 # This file is part of libyaz0.
@@ -42,7 +42,7 @@ def printInfo():
 
 
 def main():
-    print("libyaz0 v0.1")
+    print("libyaz0 v0.2")
     print("(C) 2017 MasterVermilli0n / AboodXD")
 
     if len(sys.argv) < 2:
