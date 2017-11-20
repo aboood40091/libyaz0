@@ -152,9 +152,8 @@ cpdef bytearray CompressYaz(src, level):
 
     cdef bytearray buffer
     cdef u8 code_byte
-    cdef int i, found
-    cdef u32 search, search_len, found_len, delta
-    cdef bytes c1, search_data
+    cdef int i
+    cdef u32 found, found_len, delta
 
     while pos < src_end:
         buffer = bytearray()
