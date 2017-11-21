@@ -21,13 +21,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
-    import pyximport
-
-    pyximport.install()
-    import yaz0_cy as yaz0
+    import yaz0_pyd as yaz0
 
 except:
-    import yaz0
+    try:
+        import pyximport
+
+        pyximport.install()
+        import yaz0_cy as yaz0
+
+    except:
+        import yaz0
 
 
 def IsYazCompressed(data):
