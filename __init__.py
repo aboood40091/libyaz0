@@ -30,27 +30,59 @@ except:
     import yaz0
 
 
-def IsYazCompressed(src):
-    return src[:4] in [b'Yaz0', b'Yaz1']
+def IsYazCompressed(data):
+    return data[:4] in [b'Yaz0', b'Yaz1']
 
 
-def decompress(inb):
-    isYaz = IsYazCompressed(inb)
+def decompress(data):
+    isYaz = IsYazCompressed(data)
 
     if isYaz:
-        return yaz0.DecompressYaz(inb)
+        return yaz0.DecompressYaz(data)
 
     else:
         raise ValueError("Not Yaz0 compressed!")
 
 
-def compress(inb, unk=0, level=9):
-    data = yaz0.CompressYaz(inb, level)
+def compress(data, unk=0, level=9):
+    data = yaz0.CompressYaz(data, level)
 
     result = bytearray(b'Yaz0')
-    result += len(inb).to_bytes(4, "big")
+    result += len(data).to_bytes(4, "big")
     result += unk.to_bytes(4, "big")
     result += bytes(4)
     result += data
 
     return result
+
+
+def guessFileExt(data):
+    if data[0:4] == b"BNTX":
+       return ".bntx"
+
+    elif data[0:4] == b"BNSH":
+        return ".bnsh"
+
+    elif data[0:4] == b"FLAN":
+        return ".bflan"
+
+    elif data[0:4] == b"FLYT":
+        return ".bflyt"
+
+    elif data[-0x28:-0x24] == b"FLIM":
+        return ".bflim"
+
+    elif data[0:4] == b"Gfx2":
+        return ".gtx"
+
+    elif data[0:4] == b"SARC":
+        return ".sarc"
+
+    elif data[0:4] == b"Yaz0":
+        return ".yaz0"
+
+    elif data[-0x28:-0x24] == b"FLIM":
+        return ".bflim"
+
+    else:  # Couldn't guess the file extension
+        return ".bin"

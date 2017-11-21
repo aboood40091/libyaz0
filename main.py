@@ -23,7 +23,7 @@
 import os.path
 import sys
 
-from __init__ import decompress, compress
+from __init__ import decompress, compress, guessFileExt
 
 
 def printInfo():
@@ -61,7 +61,7 @@ def main():
     if "-o" in sys.argv:
         output_ = sys.argv[sys.argv.index("-o") + 1]
     else:
-        output_ = os.path.splitext(input_)[0] + (".yaz0" if compressYaz else ".bin")
+        output_ = os.path.splitext(input_)[0]
 
     if compressYaz:
         if "-unk" in sys.argv:
@@ -82,7 +82,7 @@ def main():
 
         data = compress(inb, unk, level)
 
-        with open(output_, "wb+") as out:
+        with open(output_ + ".yaz0", "wb+") as out:
             out.write(data)
 
     else:
@@ -91,7 +91,9 @@ def main():
 
         data = decompress(inb)
 
-        with open(output_, "wb+") as out:
+        ext = guessFileExt(data)
+
+        with open(output_ + ext, "wb+") as out:
             out.write(data)
 
 
