@@ -23,7 +23,7 @@
 import os.path
 import sys
 
-from __init__ import decompress, compress, guessFileExt
+from libyaz0 import decompress, compress, guessFileExt
 
 
 def printInfo():
