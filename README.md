@@ -1,4 +1,4 @@
-# libyaz0 v0.2
+# libyaz0 v0.3
 A library for compressing/decompressing Yaz0/1 compression formats.
 
 By MasterVermilli0n / AboodXD.  
