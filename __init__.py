@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # libyaz0
-# Version 0.2
+# Version 0.3
 # Copyright © 2017 MasterVermilli0n / AboodXD
 
 # This file is part of libyaz0.
@@ -49,13 +49,13 @@ def decompress(data):
 
 
 def compress(data, unk=0, level=9):
-    data = yaz0.CompressYaz(data, level)
+    compressed_data = yaz0.CompressYaz(data, level)
 
     result = bytearray(b'Yaz0')
     result += len(data).to_bytes(4, "big")
     result += unk.to_bytes(4, "big")
     result += bytes(4)
-    result += data
+    result += compressed_data
 
     return result
 
@@ -84,9 +84,6 @@ def guessFileExt(data):
 
     elif data[0:4] == b"Yaz0":
         return ".yaz0"
-
-    elif data[-0x28:-0x24] == b"FLIM":
-        return ".bflim"
 
     else:  # Couldn't guess the file extension
         return ".bin"
