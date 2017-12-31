@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # libyaz0
-# Version 0.3
+# Version 0.4
 # Copyright © 2017 MasterVermilli0n / AboodXD
 
 # This file is part of libyaz0.
@@ -33,7 +33,7 @@ def printInfo():
     print(" -o <output>       Output file, if not specified, the output file will have the same name as the intput file")
     print(" -c                Compress (Will try to decompress if not specified)")
     print("\nCompression options:")
-    print(" -level <level>    compression level (1-9) (1 is the default)")
+    print(" -level <level>    compression level (0-9) (1 is the default)")
     print("                   0: No compression (Fastest)")
     print("                   9: Best compression (Slowest)")
     print(" -unk <unk>        the unknown value that will be located at 0x8-0xC (0x00000000 is the default)")
@@ -42,7 +42,7 @@ def printInfo():
 
 
 def main():
-    print("libyaz0 v0.3")
+    print("libyaz0 v0.4")
     print("(C) 2017 MasterVermilli0n / AboodXD")
 
     if len(sys.argv) < 2:

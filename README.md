@@ -1,4 +1,4 @@
-# libyaz0 v0.3
+# libyaz0 v0.4
 A library for compressing/decompressing Yaz0/1 compression formats.
 
 By MasterVermilli0n / AboodXD.  
@@ -14,7 +14,7 @@ Special thanks to RoadrunnerWMC for helping with looking up matches for the comp
  * `-c`: Compress (Will try to decompress if not specified)
 
 ### Compression options:
- * `-level <level>`: compression level (1-9) (1 is the default)  
+ * `-level <level>`: compression level (0-9) (1 is the default)  
 0: No compression (Fastest)  
 9: Best compression (Slowest)
 
