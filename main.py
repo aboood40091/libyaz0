@@ -42,8 +42,8 @@ def printInfo():
 
 
 def main():
-    print("libyaz0 v0.4")
-    print("(C) 2017 MasterVermilli0n / AboodXD")
+    print("libyaz0 v0.5")
+    print("(C) 2017-2018 MasterVermilli0n / AboodXD")
 
     if len(sys.argv) < 2:
         printInfo()
