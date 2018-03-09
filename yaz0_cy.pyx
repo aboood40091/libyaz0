@@ -98,16 +98,56 @@ cpdef bytes DecompressYaz(bytearray src):
         free(dest)
 
 
+cdef (u8 *, u32) compressionSearch(u8 *src, u8 *src_pos, int max_len, u32 range_, u8 *src_end):
+    cdef:
+        u32 found_len = 1
+
+        u8 *found
+        u8 *search
+        u8 *cmp_end
+        u8 c1
+        u8 *cmp1
+        u8 *cmp2
+        int len_
+
+    if src + 2 < src_end:
+        search = src - range_
+        if search < src_pos:
+             search = src_pos
+
+        cmp_end = src + max_len
+        if cmp_end > src_end:
+            cmp_end = src_end
+
+        c1 = src[0]
+        while search < src:
+            search = <u8 *>memchr(search, c1, src - search)
+            if not search:
+                break
+
+            cmp1 = search + 1
+            cmp2 = src + 1
+
+            while cmp2 < cmp_end and cmp1[0] == cmp2[0]:
+                cmp1 += 1; cmp2 += 1
+
+            len_ = cmp2 - src
+
+            if found_len < len_:
+                found_len = len_
+                found = search
+                if found_len == max_len:
+                    break
+
+            search += 1
+
+    return found, found_len
+
+
 cpdef bytearray CompressYaz(bytes src_, u8 opt_compr):
     cdef u32 range_
 
-    if opt_compr == 1:
-        range_ = 0x100
-
-    elif opt_compr == 9:
-        range_ = 0x1000
-
-    elif not opt_compr:
+    if not opt_compr:
         range_ = 0
 
     elif opt_compr < 9:
@@ -131,12 +171,6 @@ cpdef bytearray CompressYaz(bytes src_, u8 opt_compr):
         int max_len = 0x111
         u32 found_len
         u8 *found
-        u8 *search
-        u8 *cmp_end
-        u8 c1
-        u8 *cmp1
-        u8 *cmp2
-        int len_
         u32 delta
 
     try:
@@ -148,36 +182,8 @@ cpdef bytearray CompressYaz(bytes src_, u8 opt_compr):
 
             found_len = 1
 
-            if src + 2 < src_end:
-                search = src - range_
-                if search < src_pos:
-                     search = src_pos
-
-                cmp_end = src + max_len
-                if cmp_end > src_end:
-                    cmp_end = src_end
-
-                c1 = src[0]
-                while search < src:
-                    search = <u8 *>memchr(search, c1, src - search)
-                    if not search:
-                        break
-
-                    cmp1 = search + 1
-                    cmp2 = src + 1
-
-                    while cmp2 < cmp_end and cmp1[0] == cmp2[0]:
-                        cmp1 += 1; cmp2 += 1
-
-                    len_ = cmp2 - src
-
-                    if found_len < len_:
-                        found_len = len_
-                        found = search
-                        if found_len == max_len:
-                            break
-
-                    search += 1
+            if range_:
+                found, found_len = compressionSearch(src, src_pos, max_len, range_, src_end)
 
             if found_len >= 3:
                 delta = src - found - 1

@@ -78,90 +78,95 @@ def DecompressYaz(src):
     return dest
 
 
-def CompressYaz(src, opt_compr):
-    if opt_compr == 1:
-        range_ = 0x100
+def compressionSearch(src, pos, max_len, search_range, src_end):
+    found_len = 1
+    found = 0
 
-    elif opt_compr == 9:
-        range_ = 0x1000
+    if pos + 2 < src_end:
+        search = pos - search_range
+        if search < 0:
+             search = 0
 
-    elif not opt_compr:
-        range_ = 0
+        cmp_end = pos + max_len
+        if cmp_end > src_end:
+            cmp_end = src_end
 
-    elif opt_compr < 9:
-        range_ = 0x10e0 * opt_compr / 9 - 0x0e0
+        c1 = src[pos:pos + 1]
+        while search < pos:
+            search = src.find(c1, search, pos)
+            if search == -1:
+                break
 
-    else:
-        range_ = 0x1000
+            cmp1 = search + 1
+            cmp2 = pos + 1
 
-    src_pos = 0
+            while cmp2 < cmp_end and src[cmp1] == src[cmp2]:
+                cmp1 += 1; cmp2 += 1
+
+            len_ = cmp2 - pos
+
+            if found_len < len_:
+                found_len = len_
+                found = search
+                if found_len == max_len:
+                    break
+
+            search += 1
+
+    return found, found_len
+
+
+def CompressYaz(src, level):
+    dest = bytearray()
     src_end = len(src)
 
-    dest = bytearray(len(src) + (len(src) + 8) // 8)
-    dest_pos = 0
+    if not level:
+        search_range = 0
 
-    mask = 0
-    code_byte_pos = dest_pos
+    elif level < 9:
+        search_range = 0x10e0 * level // 9 - 0x0e0
+
+    else:
+        search_range = 0x1000
 
     max_len = 0x111
 
-    while src_pos < src_end:
-        if not mask:
-            code_byte_pos = dest_pos
-            dest[dest_pos] = 0; dest_pos += 1
-            mask = 0x80
+    pos = 0
 
-        found_len = 1
+    while pos < src_end:
+        buffer = bytearray()
+        code_byte = 0
 
-        if src_pos + 2 < src_end:
-            search = src_pos - range_
-            if search < 0:
-                 search = 0
+        for i in range(8):
+            if pos >= src_end:
+                break
 
-            cmp_end = src_pos + max_len
-            if cmp_end > src_end:
-                cmp_end = src_end
+            found_len = 1
 
-            c1 = src[src_pos:src_pos + 1]
-            while search < src_pos:
-                search = src.find(c1, search, src_pos)
-                if search == -1:
-                    break
+            if search_range:
+                found, found_len = compressionSearch(src, pos, max_len, search_range, src_end)
 
-                cmp1 = search + 1
-                cmp2 = src_pos + 1
+            if found_len > 2:
+                delta = pos - found - 1
 
-                while cmp2 < cmp_end and src[cmp1] == src[cmp2]:
-                    cmp1 += 1; cmp2 += 1
+                if found_len < 0x12:
+                    buffer.append(delta >> 8 | (found_len - 2) << 4)
+                    buffer.append(delta & 0xFF)
 
-                len_ = cmp2 - src_pos
+                else:
+                    buffer.append(delta >> 8)
+                    buffer.append(delta & 0xFF)
+                    buffer.append((found_len - 0x12) & 0xFF)
 
-                if found_len < len_:
-                    found_len = len_
-                    found = search
-                    if found_len == max_len:
-                        break
-
-                search += 1
-
-        if found_len >= 3:
-            delta = src_pos - found - 1
-
-            if found_len < 0x12:
-                dest[dest_pos] = delta >> 8 | ( found_len - 2 ) << 4; dest_pos += 1
-                dest[dest_pos] = delta; dest_pos += 1
+                pos += found_len
 
             else:
-                dest[dest_pos] = delta >> 8; dest_pos += 1
-                dest[dest_pos] = delta; dest_pos += 1
-                dest[dest_pos] = found_len - 0x12; dest_pos += 1
+                buffer.append(src[pos])
+                pos += 1
 
-            src_pos += found_len
+                code_byte |= 1 << (7 - i)
 
-        else:
-            dest[code_byte_pos] |= mask
-            dest[dest_pos] = src[src_pos]; dest_pos += 1; src_pos += 1
+        dest.append(code_byte)
+        dest += buffer
 
-        mask >>= 1
-
-    return dest[:dest_pos]
+    return dest
