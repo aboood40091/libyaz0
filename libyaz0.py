@@ -20,9 +20,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pyximport
-pyximport.install()
-import yaz0_cy as yaz0
+try:
+    import yaz0_pyd as yaz0
+
+except:
+    try:
+        import pyximport
+
+        pyximport.install()
+        import yaz0_cy as yaz0
+
+    except:
+        import yaz0
 
 
 def IsYazCompressed(data):
