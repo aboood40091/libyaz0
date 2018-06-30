@@ -56,8 +56,8 @@ def main():
     input_ = sys.argv[-1]
 
     if not os.path.isfile(input_):
-        print("File doesn't exist!\n")
-        print("Exiting in 5 seconds...")
+        print("\nFile doesn't exist!")
+        print("\nExiting in 5 seconds...")
         time.sleep(5)
         sys.exit(1)
 
@@ -70,7 +70,7 @@ def main():
         output_ = sys.argv[sys.argv.index("-o") + 1]
 
     else:
-        output_ = os.path.splitext(input_)[0]
+        output_ = ''.join([os.path.splitext(input_)[0], ".szs"])
 
     if compressYaz:
         if "-align" in sys.argv:
@@ -104,7 +104,7 @@ def main():
 
         data = compress(inb, alignment, level)
 
-        with open(output_ + ".szs", "wb+") as out:
+        with open(output_, "wb+") as out:
             out.write(data)
 
     else:
