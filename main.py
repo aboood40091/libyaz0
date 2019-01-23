@@ -34,7 +34,7 @@ def printInfo():
     print("\nUsage:")
     print("  main [option...] input")
     print("\nOptions:")
-    print(" -o <output>           Output file, if not specified, the output file will have the same name as the intput file")
+    print(" -o <output>           Output file, if not specified, the output file will have the same name as the input file")
     print(" -c                    Compress (Will try to decompress if not specified)")
     print("\nCompression options:")
     print(" -level <level>        compression level (0-9) (1 is the default)")
